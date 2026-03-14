@@ -19,12 +19,10 @@ def lambda_handler(event, context):
     method = event["requestContext"]["http"]["method"]
     path = event["rawPath"]
 
-    # GET /hello
     if path == "/hello" and method == "GET":
         return response(200, {"message": "Hello from Lambda"})
 
 
-    # POST /echo
     if path == "/echo" and method == "POST":
 
         body = json.loads(event.get("body", "{}"))
@@ -40,7 +38,6 @@ def lambda_handler(event, context):
         return response(201, item)
 
 
-    # GET /echo
     if path == "/echo" and method == "GET":
 
         result = table.scan()
@@ -48,7 +45,6 @@ def lambda_handler(event, context):
         return response(200, result.get("Items", []))
 
 
-    # DELETE /echo
     if path == "/echo" and method == "DELETE":
 
         items = table.scan().get("Items", [])
