@@ -9,9 +9,7 @@ table = dynamodb.Table("DynamoDB")
 def response(status, body):
     return {
         "statusCode": status,
-        "headers": {
-            "Content-Type": "application/json"
-        },
+        "headers": {"Content-Type": "application/json"},
         "body": json.dumps(body)
     }
 
@@ -33,7 +31,8 @@ def lambda_handler(event, context):
 
         item = {
             "id": str(uuid.uuid4()),
-            **body
+            "name": body.get("name"),
+            "role": body.get("role")
         }
 
         table.put_item(Item=item)
@@ -58,6 +57,5 @@ def lambda_handler(event, context):
             table.delete_item(Key={"id": item["id"]})
 
         return response(200, {"deleted": len(items)})
-
 
     return response(404, {"message": "Not Found"})
