@@ -1,10 +1,19 @@
-Helper: luôn dọn DynamoDB trước khi test
-Test POST /echo (chỉ test tạo dữ liệu)
-Test GET /echo sau khi đã POST
-Test DELETE /echo
-    - Test độc lập
-    - Không phụ thuộc thứ tự test khác
-    - Tự chuẩn bị dữ liệu trước khi xoá
-Test dữ liệu đầu vào sai kiểu:
-    name đáng lẽ là string nhưng gửi number
+# API Test Automation with CI/CD
 
+## Architecture
+API Gateway → Lambda → DynamoDB
+
+## Automation Test
+Tests are written using pytest.
+
+## CI/CD Pipeline
+GitHub Actions performs:
+
+1. Install Python
+2. Install dependencies
+3. Run pytest
+4. Deploy Lambda if tests pass
+
+## Run locally
+
+pytest -v

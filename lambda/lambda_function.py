@@ -19,7 +19,7 @@ def response(status, body):
 def lambda_handler(event, context):
 
     method = event["requestContext"]["http"]["method"]
-    path = event["requestContext"]["http"]["path"]
+    path = event["rawPath"]
 
     # GET /hello
     if path == "/hello" and method == "GET":
