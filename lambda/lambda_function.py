@@ -17,20 +17,21 @@ def response(status, body):
 def lambda_handler(event, context):
 
     method = event["requestContext"]["http"]["method"]
-    path = event["rawPath"]
+    path = event.get("rawPath") or event["requestContext"]["http"].get("path", "")
 
-    if path == "/hello" and method == "GET":
+    # GET /hello
+    if path.endswith("/hello") and method == "GET":
         return response(200, {"message": "Hello from Lambda"})
 
 
-    if path == "/echo" and method == "POST":
+    # POST /echo
+    if path.endswith("/echo") and method == "POST":
 
-        body = json.loads(event.get("body", "{}"))
+        body = json.loads(event.get("body") or "{}")
 
         item = {
             "id": str(uuid.uuid4()),
-            "name": body.get("name"),
-            "role": body.get("role")
+            **body
         }
 
         table.put_item(Item=item)
@@ -38,14 +39,16 @@ def lambda_handler(event, context):
         return response(201, item)
 
 
-    if path == "/echo" and method == "GET":
+    # GET /echo
+    if path.endswith("/echo") and method == "GET":
 
         result = table.scan()
 
         return response(200, result.get("Items", []))
 
 
-    if path == "/echo" and method == "DELETE":
+    # DELETE /echo
+    if path.endswith("/echo") and method == "DELETE":
 
         items = table.scan().get("Items", [])
 
@@ -53,5 +56,6 @@ def lambda_handler(event, context):
             table.delete_item(Key={"id": item["id"]})
 
         return response(200, {"deleted": len(items)})
+
 
     return response(404, {"message": "Not Found"})
