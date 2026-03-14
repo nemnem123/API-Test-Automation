@@ -1,22 +1,22 @@
-name: API Test Automation
+name: CI-CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
+
   test:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: 3.12
 
       - name: Install dependencies
         run: |
@@ -25,3 +25,28 @@ jobs:
       - name: Run tests
         run: |
           pytest -v
+
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Lambda
+        run: |
+          zip lambda.zip lambda/lambda_function.py
+
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code \
+          --function-name demo-api \
+          --zip-file fileb://lambda.zip
