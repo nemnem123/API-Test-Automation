@@ -6,6 +6,7 @@ BASE_URL = "https://i4gwcc0h4h.execute-api.ap-southeast-2.amazonaws.com/dev"
 def test_get_hello():
 
     r = requests.get(f"{BASE_URL}/hello")
+    print(f"Status: {r.status_code}, Body: {r.text}")
 
     assert r.status_code == 200
 
