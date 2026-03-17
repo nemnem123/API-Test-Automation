@@ -45,7 +45,7 @@ jobs:
 
       - name: Zip Lambda
         run: |
-          zip lambda.zip lambda/lambda_function.py
+          zip -r function.zip lambda/
 
       - name: Deploy Lambda
         run: |
