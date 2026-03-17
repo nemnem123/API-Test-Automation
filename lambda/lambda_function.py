@@ -5,57 +5,66 @@ import uuid
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table("DynamoDB")
 
-
-def response(status, body):
-    return {
-        "statusCode": status,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(body)
-    }
-
-
 def lambda_handler(event, context):
+    try:
+        print("EVENT:", event)
 
-    method = event["requestContext"]["http"]["method"]
-    path = event.get("rawPath") or event["requestContext"]["http"].get("path", "")
+        method = event["requestContext"]["http"]["method"]
+        path = event["rawPath"]
 
-    # GET /hello
-    if path.endswith("/hello") and method == "GET":
-        return response(200, {"message": "Hello from Lambda"})
+        # ===== HELLO =====
+        if path == "/hello" and method == "GET":
+            return {
+                "statusCode": 200,
+                "body": json.dumps({"message": "hello world"})
+            }
 
+        # ===== POST =====
+        if path == "/echo" and method == "POST":
+            body = json.loads(event["body"])
 
-    # POST /echo
-    if path.endswith("/echo") and method == "POST":
+            item = {
+                "id": str(uuid.uuid4()),
+                "name": body.get("name"),
+                "role": body.get("role")
+            }
 
-        body = json.loads(event.get("body") or "{}")
+            table.put_item(Item=item)
 
-        item = {
-            "id": str(uuid.uuid4()),
-            **body
+            return {
+                "statusCode": 201,
+                "body": json.dumps(item)
+            }
+
+        # ===== GET =====
+        if path == "/echo" and method == "GET":
+            response = table.scan()
+
+            return {
+                "statusCode": 200,
+                "body": json.dumps(response.get("Items", []))
+            }
+
+        # ===== DELETE =====
+        if path == "/echo" and method == "DELETE":
+            items = table.scan().get("Items", [])
+
+            for item in items:
+                table.delete_item(Key={"id": item["id"]})
+
+            return {
+                "statusCode": 200,
+                "body": json.dumps({"message": "deleted"})
+            }
+
+        return {
+            "statusCode": 404,
+            "body": json.dumps({"message": "Not Found"})
         }
 
-        table.put_item(Item=item)
-
-        return response(201, item)
-
-
-    # GET /echo
-    if path.endswith("/echo") and method == "GET":
-
-        result = table.scan()
-
-        return response(200, result.get("Items", []))
-
-
-    # DELETE /echo
-    if path.endswith("/echo") and method == "DELETE":
-
-        items = table.scan().get("Items", [])
-
-        for item in items:
-            table.delete_item(Key={"id": item["id"]})
-
-        return response(200, {"deleted": len(items)})
-
-
-    return response(404, {"message": "Not Found"})
+    except Exception as e:
+        print("ERROR:", str(e))
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
