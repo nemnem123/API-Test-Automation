@@ -3,22 +3,27 @@ import boto3
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('DynamoDB')  # đúng tên bảng
+table = dynamodb.Table('DynamoDB')
+
 
 def lambda_handler(event, context):
 
     path = event.get("rawPath")
     method = event.get("requestContext", {}).get("http", {}).get("method")
 
+    # normalize path (bỏ /dev)
+    if path.startswith("/dev"):
+        path = path.replace("/dev", "")
+
     # ===== HELLO =====
-    if path == "/dev/hello" and method == "GET":
+    if path == "/hello" and method == "GET":
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "hello"})
         }
 
     # ===== POST =====
-    if path == "/dev/echo" and method == "POST":
+    if path == "/echo" and method == "POST":
         body = json.loads(event.get("body", "{}"))
 
         item = {
@@ -35,7 +40,7 @@ def lambda_handler(event, context):
         }
 
     # ===== GET =====
-    if path == "/dev/echo" and method == "GET":
+    if path == "/echo" and method == "GET":
         res = table.scan()
 
         return {
@@ -44,7 +49,7 @@ def lambda_handler(event, context):
         }
 
     # ===== DELETE =====
-    if path == "/dev/echo" and method == "DELETE":
+    if path == "/echo" and method == "DELETE":
         res = table.scan()
 
         for item in res.get("Items", []):
@@ -55,7 +60,6 @@ def lambda_handler(event, context):
             "body": json.dumps({"message": "deleted"})
         }
 
-    # ===== DEFAULT =====
     return {
         "statusCode": 404,
         "body": json.dumps({"message": "Not found"})
