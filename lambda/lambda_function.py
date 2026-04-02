@@ -5,24 +5,32 @@ import uuid
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('DynamoDB')
 
+def response(status, body):
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": json.dumps(body)
+    }
 
 def lambda_handler(event, context):
 
-    path = event.get("rawPath")
+    path = event.get("rawPath", "")
     method = event.get("requestContext", {}).get("http", {}).get("method")
 
-    # normalize path (bỏ /dev)
+    # fix /dev
     if path.startswith("/dev"):
         path = path.replace("/dev", "")
 
-    # ===== HELLO =====
-    if path == "/hello" and method == "GET":
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"message": "hello"})
-        }
+    print("PATH:", path)
+    print("METHOD:", method)
 
-    # ===== POST =====
+    # HELLO
+    if path == "/hello" and method == "GET":
+        return response(200, {"message": "hello"})
+
+    # POST
     if path == "/echo" and method == "POST":
         body = json.loads(event.get("body", "{}"))
 
@@ -34,33 +42,20 @@ def lambda_handler(event, context):
 
         table.put_item(Item=item)
 
-        return {
-            "statusCode": 201,
-            "body": json.dumps(item)
-        }
+        return response(201, item)
 
-    # ===== GET =====
+    # GET
     if path == "/echo" and method == "GET":
         res = table.scan()
+        return response(200, res.get("Items", []))
 
-        return {
-            "statusCode": 200,
-            "body": json.dumps(res.get("Items", []))
-        }
-
-    # ===== DELETE =====
+    # DELETE
     if path == "/echo" and method == "DELETE":
         res = table.scan()
 
         for item in res.get("Items", []):
             table.delete_item(Key={"id": item["id"]})
 
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"message": "deleted"})
-        }
+        return response(200, {"message": "deleted"})
 
-    return {
-        "statusCode": 404,
-        "body": json.dumps({"message": "Not found"})
-    }
+    return response(404, {"message": "Not found"})
